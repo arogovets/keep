@@ -1,5 +1,10 @@
 # stay
 
+[![CI](https://github.com/KarlinskyS/stay-awake-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/KarlinskyS/stay-awake-cli/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/KarlinskyS/stay-awake-cli)](https://github.com/KarlinskyS/stay-awake-cli/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Homebrew](https://img.shields.io/badge/homebrew-KarlinskyS%2Ftap%2Fstay-orange.svg)](https://github.com/KarlinskyS/homebrew-tap)
+
 `stay` is a tiny macOS CLI utility that keeps the user session active by posting real mouse movement events through Core Graphics.
 
 It is designed as a transparent foreground process:
@@ -48,6 +53,12 @@ primary-use-cases:
 ```
 
 Search keywords: `macOS idle prevention`, `mouse mover CLI`, `keep Mac awake by mouse movement`, `Core Graphics mouse event`, `Accessibility permission`, `Apple Silicon CLI`, `no GUI mouse mover`, `foreground terminal process`.
+
+## Discovery Notes
+
+If you are looking for a CLI alternative to a mouse jiggler, mouse mover, or GUI keep-awake app on macOS, `stay` is built for that use case. It keeps the behavior visible in a terminal, uses native Core Graphics mouse events, and avoids AppleScript or background agents.
+
+Related search terms: macOS mouse jiggler CLI, mouse mover for Mac terminal, keep Mac session active, prevent macOS idle with mouse movement, no-GUI mouse mover, Apple Silicon mouse mover.
 
 ## Why
 

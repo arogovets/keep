@@ -1,27 +1,56 @@
 # stay
 
-`stay` is a small macOS CLI utility that prevents user idle by posting real mouse movement events through Core Graphics. It runs as a transparent foreground terminal process until you stop it with `Ctrl+C`.
+`stay` is a tiny macOS CLI utility that keeps the user session active by posting real mouse movement events through Core Graphics.
 
-No `.app`, menu bar item, tray icon, daemon, launch agent, AppleScript, or GUI dependency is created.
+It is designed as a transparent foreground process:
 
-The implementation is inspired by the general idea of periodic mouse movement tools, but no source code from `automatic-mouse-mover` is copied into this repository.
+```bash
+stay
+```
+
+While the command is running, `stay` is active. Press `Ctrl+C` and it stops immediately.
+
+`stay` is CLI-only. It does not install a `.app`, menu bar item, tray icon, daemon, launch agent, AppleScript, or any GUI component.
+
+## Why
+
+Some GUI mouse mover apps are hard to inspect, hard to debug, and awkward to run in controlled environments. `stay` keeps the behavior explicit:
+
+- one terminal command starts it;
+- terminal logs show every decision;
+- `Ctrl+C`, `SIGINT`, or `SIGTERM` stops it;
+- the cursor returns to its original position after every synthetic movement;
+- there is no accumulated cursor drift.
+
+The implementation is inspired by the general idea of periodic mouse movement tools, including `automatic-mouse-mover`, but no source code from that project is copied here.
 
 ## Requirements
 
-- macOS on Apple Silicon or Intel.
-- Accessibility permission for the terminal application running `stay`, or for the installed `stay` binary.
-- Go 1.22 or newer for local builds.
+- macOS.
+- Apple Silicon or Intel Mac.
+- Go 1.22+ if building from source.
+- Accessibility permission for either:
+  - the terminal application that runs `stay`; or
+  - the installed `stay` binary.
+
+`stay` uses macOS ApplicationServices/Core Graphics APIs. It does not use AppleScript.
 
 ## Install
+
+Build and install into `$HOME/.local/bin`:
 
 ```bash
 make build
 make install
 ```
 
-By default `make install` copies the binary to `$HOME/.local/bin/stay`. Make sure that directory is in your `PATH`.
+Make sure `$HOME/.local/bin` is in your `PATH`:
 
-To install into `/usr/local/bin` instead:
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Install into `/usr/local/bin` instead:
 
 ```bash
 sudo make install PREFIX=/usr/local
@@ -33,6 +62,13 @@ sudo make install PREFIX=/usr/local
 stay
 ```
 
+Default behavior:
+
+- checks activity every `60s`;
+- moves the cursor by `1px`;
+- skips synthetic movement if real mouse or keyboard activity happened during the interval;
+- moves to a nearby valid on-screen point and then returns to the original cursor position.
+
 Example output:
 
 ```text
@@ -43,9 +79,9 @@ Press Ctrl+C to stop
 
 13:43:00 idle for 60s - cursor moved
 13:44:00 user activity detected - skipped
+13:45:00 idle for 60s - cursor moved
+13:45:12 stopped
 ```
-
-While the process is running in the terminal, it is active. Press `Ctrl+C` to stop it. After shutdown it no longer generates events.
 
 ## Options
 
@@ -58,14 +94,27 @@ stay --version
 stay --help
 ```
 
-- `--interval` sets the check period. Values accepted by Go duration syntax work, for example `60s`, `1m`, or `500ms`. A bare integer is treated as seconds.
-- `--distance` sets the cursor movement distance in pixels.
-- `--always` moves the cursor every interval regardless of user activity.
-- `--verbose` prints more detailed diagnostic logs.
-- `--version` prints the binary version.
-- `--help` prints usage.
+| Option | Description |
+| --- | --- |
+| `--interval` | Check interval. Accepts Go duration values such as `60s`, `1m`, `500ms`. A bare integer is treated as seconds. |
+| `--distance` | Cursor movement distance in pixels. Default: `1`. |
+| `--always` | Move every interval, even if user activity was detected. |
+| `--verbose` | Print more detailed diagnostics. |
+| `--version` | Print version and exit. |
+| `--help` | Print usage and exit. |
+
+Examples:
+
+```bash
+stay --interval 30s
+stay --interval 5s --verbose
+stay --distance 2
+stay --always
+```
 
 ## Accessibility Permission
+
+On first run, macOS may block synthetic input events until Accessibility permission is granted.
 
 If permission is missing, `stay` exits with:
 
@@ -75,42 +124,118 @@ Open System Settings -> Privacy & Security -> Accessibility
 and allow your terminal application or the stay binary.
 ```
 
-Grant permission in macOS System Settings, then run `stay` again. No GUI interaction is required after the permission is granted.
+To grant permission:
+
+1. Open `System Settings`.
+2. Go to `Privacy & Security`.
+3. Open `Accessibility`.
+4. Enable your terminal application, for example `Terminal`, `iTerm2`, `Ghostty`, `WezTerm`, or `Alacritty`.
+5. Run `stay` again.
+
+If you run the installed binary directly and macOS shows the binary as the requesting process, allow `stay` itself.
+
+## How It Works
+
+Every interval, `stay` asks macOS how long it has been since the last input event.
+
+If the user has been idle for at least the configured interval, `stay`:
+
+1. reads the current cursor position;
+2. reads the active display bounds;
+3. chooses a nearby valid point on any active display;
+4. posts a Core Graphics `kCGEventMouseMoved` event;
+5. waits briefly;
+6. posts another mouse move event back to the original position.
+
+This handles screen edges and multi-monitor layouts, including displays with negative coordinates.
+
+Because synthetic movement itself resets the macOS idle timer, `stay` tracks its own last synthetic movement and distinguishes it from real user activity.
 
 ## Diagnostics
+
+Run with a short interval while testing:
+
+```bash
+stay --interval 5s --verbose
+```
+
+Check macOS power assertions:
+
+```bash
+pmset -g assertions
+```
+
+After synthetic movement, macOS should report recent user activity, commonly through a `UserIsActive` assertion owned by `WindowServer`.
 
 Useful checks:
 
 ```bash
-stay --interval 5s --verbose
-pmset -g assertions
+stay --version
+stay --help
+make test
+make build
 ```
 
-The utility logs startup, detected user activity, each cursor movement, errors, and shutdown. Each synthetic movement moves from the current cursor position to a nearby valid point, waits briefly, and moves back to the original position to avoid accumulated cursor drift.
+## Troubleshooting
+
+### `command not found: stay`
+
+The install path is probably not in `PATH`.
+
+Run directly:
+
+```bash
+$HOME/.local/bin/stay
+```
+
+Or add it to your shell profile:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### Accessibility permission was granted, but movement still fails
+
+Try the following:
+
+- restart the terminal application;
+- remove and re-add the terminal application in Accessibility settings;
+- if launching `/usr/local/bin/stay` or `$HOME/.local/bin/stay` directly, allow the binary if macOS lists it separately;
+- run `stay --interval 5s --verbose` and inspect the logs.
+
+### Cursor moves but a remote desktop session does not see it
+
+Remote desktop clients decide which local input events are forwarded into the remote session. `stay` can only generate local macOS mouse movement. The remote client must accept and forward that movement.
 
 ## Citrix
 
-Synthetic mouse movement reaches Citrix Workspace only under the same conditions in which Citrix accepts normal local cursor movement. In practice this can depend on Citrix focus, session mode, client settings, and the active remote window. Verify whether the Citrix window must be focused for your environment.
+Synthetic movement reaches Citrix Workspace only under the same conditions in which Citrix accepts normal local cursor movement.
+
+In practice, this may depend on:
+
+- whether the Citrix window has focus;
+- whether the pointer is inside the Citrix window;
+- Citrix Workspace settings;
+- remote session policy;
+- full-screen vs windowed mode.
+
+Verify your environment separately. In some Citrix setups, active focus is required before movement is forwarded into the remote session.
 
 ## Uninstall
 
-Remove the installed binary:
+If installed into `$HOME/.local/bin`:
 
 ```bash
 rm -f "$HOME/.local/bin/stay"
 ```
 
-If installed with `/usr/local`:
+If installed into `/usr/local/bin`:
 
 ```bash
 sudo rm -f /usr/local/bin/stay
 ```
 
-You can also remove the Accessibility permission from System Settings.
-
-## Policy
-
-Use this utility only in ways that comply with your organization policies and local rules.
+You can also remove the Accessibility permission from `System Settings -> Privacy & Security -> Accessibility`.
 
 ## Development
 
@@ -118,15 +243,43 @@ Use this utility only in ways that comply with your organization policies and lo
 make test
 make build
 bin/stay --help
+bin/stay --interval 5s --verbose
+```
+
+Project layout:
+
+```text
+.
+├── cmd/stay/main.go
+├── internal/activity
+├── internal/cli
+├── internal/mover
+├── go.mod
+├── Makefile
+├── README.md
+└── LICENSE
 ```
 
 Manual smoke checklist:
 
-- `Ctrl+C` stops the foreground process.
-- Cursor returns to its original position after movement.
-- No accumulated cursor drift after repeated intervals.
-- Movement works on the primary monitor and an additional monitor.
+- `stay` starts a long-running foreground process.
+- Terminal output clearly shows that the process is active.
+- `Ctrl+C` stops the process and logs shutdown.
+- `SIGTERM` stops the process and logs shutdown.
+- Each actual synthetic movement is logged.
+- Cursor returns to the original position after movement.
+- Repeated movement does not accumulate cursor drift.
+- Movement works on the primary monitor.
+- Movement works on an additional monitor.
 - Cursor near screen edges still moves to a valid on-screen point and returns.
-- Missing Accessibility permission produces the documented error.
-- `pmset -g assertions` or another system indicator reflects user activity after synthetic movement.
-- Citrix behavior is verified with and without active Citrix focus.
+- Missing Accessibility permission shows the documented error.
+- `pmset -g assertions` or another system indicator sees user activity after synthetic movement.
+- Citrix behavior is tested with and without active Citrix focus.
+
+## Policy
+
+Use `stay` only in ways that comply with your organization policies, contracts, and local rules. This tool is intentionally transparent so its behavior is easy to inspect and reason about.
+
+## License
+
+MIT.

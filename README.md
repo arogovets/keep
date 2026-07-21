@@ -37,6 +37,22 @@ The implementation is inspired by the general idea of periodic mouse movement to
 
 ## Install
 
+Install with Homebrew:
+
+```bash
+brew install KarlinskyS/tap/stay
+```
+
+Then run:
+
+```bash
+stay
+```
+
+Homebrew builds `stay` from source and installs any build dependencies it needs.
+
+## Build From Source
+
 Build and install into `$HOME/.local/bin`:
 
 ```bash

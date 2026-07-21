@@ -207,20 +207,6 @@ Try the following:
 
 Remote desktop clients decide which local input events are forwarded into the remote session. `stay` can only generate local macOS mouse movement. The remote client must accept and forward that movement.
 
-## Citrix
-
-Synthetic movement reaches Citrix Workspace only under the same conditions in which Citrix accepts normal local cursor movement.
-
-In practice, this may depend on:
-
-- whether the Citrix window has focus;
-- whether the pointer is inside the Citrix window;
-- Citrix Workspace settings;
-- remote session policy;
-- full-screen vs windowed mode.
-
-Verify your environment separately. In some Citrix setups, active focus is required before movement is forwarded into the remote session.
-
 ## Uninstall
 
 If installed into `$HOME/.local/bin`:
@@ -274,7 +260,6 @@ Manual smoke checklist:
 - Cursor near screen edges still moves to a valid on-screen point and returns.
 - Missing Accessibility permission shows the documented error.
 - `pmset -g assertions` or another system indicator sees user activity after synthetic movement.
-- Citrix behavior is tested with and without active Citrix focus.
 
 ## Policy
 

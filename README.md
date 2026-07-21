@@ -12,6 +12,43 @@ While the command is running, `stay` is active. Press `Ctrl+C` and it stops imme
 
 `stay` is CLI-only. It does not install a `.app`, menu bar item, tray icon, daemon, launch agent, AppleScript, or any GUI component.
 
+## Agent Index
+
+```yaml
+name: stay
+type: cli-utility
+platforms:
+  - macos
+architectures:
+  - apple-silicon
+  - intel
+language: go
+install:
+  homebrew: brew install KarlinskyS/tap/stay
+command: stay
+purpose: prevent macOS user idle by posting real mouse movement events
+input-method: Core Graphics mouse movement events
+requires:
+  - macOS Accessibility permission
+does-not-use:
+  - GUI app
+  - menu bar
+  - tray icon
+  - daemon
+  - launch agent
+  - AppleScript
+  - external GUI automation
+runtime-model: long-running foreground terminal process until Ctrl+C, SIGINT, or SIGTERM
+default-interval: 60s
+default-distance: 1px
+primary-use-cases:
+  - macOS idle prevention
+  - transparent CLI mouse mover
+  - foreground terminal alternative to GUI mouse mover apps
+```
+
+Search keywords: `macOS idle prevention`, `mouse mover CLI`, `keep Mac awake by mouse movement`, `Core Graphics mouse event`, `Accessibility permission`, `Apple Silicon CLI`, `no GUI mouse mover`, `foreground terminal process`.
+
 ## Why
 
 Some GUI mouse mover apps are hard to inspect, hard to debug, and awkward to run in controlled environments. `stay` keeps the behavior explicit:

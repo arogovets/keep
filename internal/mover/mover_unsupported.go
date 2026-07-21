@@ -2,10 +2,13 @@
 
 package mover
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type System struct{}
 
-func (System) MoveAndReturn(distance int) error {
+func (System) MoveAndReturn(ctx context.Context, distance int) error {
 	return errors.New("stay is supported only on macOS")
 }

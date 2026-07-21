@@ -16,14 +16,22 @@ typedef struct {
 	double height;
 } display_rect;
 
-static CGPoint current_mouse_location(void) {
+typedef struct {
+	double x;
+	double y;
+	bool ok;
+} mouse_location;
+
+static mouse_location current_mouse_location(void) {
 	CGEventRef event = CGEventCreate(NULL);
 	if (event == NULL) {
-		return CGPointMake(0, 0);
+		mouse_location failed = {0, 0, false};
+		return failed;
 	}
 	CGPoint point = CGEventGetLocation(event);
 	CFRelease(event);
-	return point;
+	mouse_location location = {point.x, point.y, true};
+	return location;
 }
 
 static bool post_mouse_move(double x, double y) {
@@ -77,6 +85,7 @@ static int active_display_bounds(display_rect *rects, int max) {
 import "C"
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -87,8 +96,15 @@ const returnDelay = 100 * time.Millisecond
 
 type System struct{}
 
-func (System) MoveAndReturn(distance int) error {
-	position := CurrentPosition()
+func (System) MoveAndReturn(ctx context.Context, distance int) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	position, err := CurrentPosition()
+	if err != nil {
+		return err
+	}
 	displays, err := ActiveDisplays()
 	if err != nil {
 		return err
@@ -102,16 +118,26 @@ func (System) MoveAndReturn(distance int) error {
 	if err := postMove(target); err != nil {
 		return err
 	}
-	time.Sleep(returnDelay)
+
+	timer := time.NewTimer(returnDelay)
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+	case <-timer.C:
+	}
+
 	if err := postMove(position); err != nil {
 		return err
 	}
 	return nil
 }
 
-func CurrentPosition() Point {
+func CurrentPosition() (Point, error) {
 	point := C.current_mouse_location()
-	return Point{X: float64(point.x), Y: float64(point.y)}
+	if !bool(point.ok) {
+		return Point{}, errors.New("failed to read current mouse location")
+	}
+	return Point{X: float64(point.x), Y: float64(point.y)}, nil
 }
 
 func ActiveDisplays() ([]Rect, error) {

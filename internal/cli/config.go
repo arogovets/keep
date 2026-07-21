@@ -36,7 +36,7 @@ func ParseArgs(args []string, out io.Writer, version string) (Config, error) {
 	fs.SetOutput(out)
 
 	interval := fs.String("interval", cfg.Interval.String(), "check interval, for example 60s, 1m, or 500ms")
-	fs.IntVar(&cfg.Distance, "distance", cfg.Distance, "cursor movement distance in pixels")
+	fs.IntVar(&cfg.Distance, "distance", cfg.Distance, "cursor movement distance in display points")
 	fs.BoolVar(&cfg.Always, "always", cfg.Always, "move cursor every interval regardless of user activity")
 	fs.BoolVar(&cfg.Verbose, "verbose", cfg.Verbose, "print detailed diagnostic logs")
 	fs.BoolVar(&cfg.Version, "version", false, "print version and exit")

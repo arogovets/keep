@@ -40,7 +40,7 @@ does-not-use:
   - external GUI automation
 runtime-model: long-running foreground terminal process until Ctrl+C, SIGINT, or SIGTERM
 default-interval: 60s
-default-distance: 1px
+default-distance: 1 display point
 primary-use-cases:
   - macOS idle prevention
   - transparent CLI mouse mover
@@ -136,7 +136,7 @@ stay
 Default behavior:
 
 - checks activity every `60s`;
-- moves the cursor by `1px`;
+- moves the cursor by `1` display point;
 - skips synthetic movement if real mouse or keyboard activity happened during the interval;
 - moves to a nearby valid on-screen point and then returns to the original cursor position.
 
@@ -145,7 +145,7 @@ Example output:
 ```text
 13:42:00 Stay started
 Interval: 60s
-Move distance: 1px
+Move distance: 1 display point(s)
 Press Ctrl+C to stop
 
 13:43:00 idle for 60s - cursor moved
@@ -168,7 +168,7 @@ stay --help
 | Option | Description |
 | --- | --- |
 | `--interval` | Check interval. Accepts Go duration values such as `60s`, `1m`, `500ms`. A bare integer is treated as seconds. |
-| `--distance` | Cursor movement distance in pixels. Default: `1`. |
+| `--distance` | Cursor movement distance in macOS display points. Default: `1`. |
 | `--always` | Move every interval, even if user activity was detected. |
 | `--verbose` | Print more detailed diagnostics. |
 | `--version` | Print version and exit. |

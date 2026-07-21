@@ -30,13 +30,38 @@ func TestShouldMove(t *testing.T) {
 }
 
 func TestShouldMoveAfterSynthetic(t *testing.T) {
-	got := ShouldMoveAfterSynthetic(false, 59*time.Second+900*time.Millisecond, time.Minute, time.Minute, true)
-	if got != DecisionMove {
-		t.Fatalf("ShouldMoveAfterSynthetic() = %s, want %s", got, DecisionMove)
+	cases := []struct {
+		name         string
+		idleFor      time.Duration
+		syntheticAge time.Duration
+		want         Decision
+	}{
+		{
+			name:         "synthetic input at interval moves",
+			idleFor:      time.Minute,
+			syntheticAge: time.Minute,
+			want:         DecisionMove,
+		},
+		{
+			name:         "user input shortly after synthetic skips",
+			idleFor:      59*time.Second + 900*time.Millisecond,
+			syntheticAge: time.Minute,
+			want:         DecisionSkip,
+		},
+		{
+			name:         "too soon after synthetic skips",
+			idleFor:      10 * time.Second,
+			syntheticAge: 10 * time.Second,
+			want:         DecisionSkip,
+		},
 	}
 
-	got = ShouldMoveAfterSynthetic(false, 10*time.Second, time.Minute, time.Minute, true)
-	if got != DecisionSkip {
-		t.Fatalf("ShouldMoveAfterSynthetic() = %s, want %s", got, DecisionSkip)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := ShouldMoveAfterSynthetic(false, tc.idleFor, time.Minute, tc.syntheticAge, true)
+			if got != tc.want {
+				t.Fatalf("ShouldMoveAfterSynthetic() = %s, want %s", got, tc.want)
+			}
+		})
 	}
 }

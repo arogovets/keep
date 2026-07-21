@@ -21,7 +21,7 @@ type lastActivityProvider interface {
 }
 
 type cursorMover interface {
-	MoveAndReturn(distance int) error
+	MoveAndReturn(ctx context.Context, distance int) error
 }
 
 func Run(args []string, stdout io.Writer, stderr io.Writer, version string) (int, error) {
@@ -68,7 +68,7 @@ and allow your terminal application or the stay binary.`)
 
 	r.log("Stay started")
 	fmt.Fprintf(r.out, "Interval: %s\n", formatDuration(r.cfg.Interval))
-	fmt.Fprintf(r.out, "Move distance: %dpx\n", r.cfg.Distance)
+	fmt.Fprintf(r.out, "Move distance: %d display point(s)\n", r.cfg.Distance)
 	fmt.Fprintln(r.out, "Press Ctrl+C to stop")
 	fmt.Fprintln(r.out)
 
@@ -81,14 +81,14 @@ and allow your terminal application or the stay binary.`)
 			r.log("stopped")
 			return 0, nil
 		case <-ticker.C:
-			if err := r.tick(); err != nil {
+			if err := r.tick(ctx); err != nil {
 				r.log("error: %v", err)
 			}
 		}
 	}
 }
 
-func (r *appRunner) tick() error {
+func (r *appRunner) tick(ctx context.Context) error {
 	idleFor, err := r.activity.LastInputAge()
 	if err != nil {
 		return fmt.Errorf("read activity: %w", err)
@@ -96,8 +96,9 @@ func (r *appRunner) tick() error {
 
 	var syntheticAge time.Duration
 	hasSynthetic := !r.lastSyntheticAt.IsZero()
+	now := r.now()
 	if hasSynthetic {
-		syntheticAge = r.now().Sub(r.lastSyntheticAt)
+		syntheticAge = now.Sub(r.lastSyntheticAt)
 	}
 
 	if ShouldMoveAfterSynthetic(r.cfg.Always, idleFor, r.cfg.Interval, syntheticAge, hasSynthetic) == DecisionSkip {
@@ -109,7 +110,7 @@ func (r *appRunner) tick() error {
 		return nil
 	}
 
-	if err := r.mover.MoveAndReturn(r.cfg.Distance); err != nil {
+	if err := r.mover.MoveAndReturn(ctx, r.cfg.Distance); err != nil {
 		return fmt.Errorf("move cursor: %w", err)
 	}
 	r.lastSyntheticAt = r.now()

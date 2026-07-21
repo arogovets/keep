@@ -37,10 +37,16 @@ The implementation is inspired by the general idea of periodic mouse movement to
 
 ## Install
 
-Install with Homebrew:
+Recommended install method:
 
 ```bash
 brew install KarlinskyS/tap/stay
+```
+
+This installs the `stay` command from the public Homebrew tap:
+
+```text
+KarlinskyS/homebrew-tap
 ```
 
 Then run:
@@ -49,7 +55,19 @@ Then run:
 stay
 ```
 
-Homebrew builds `stay` from source and installs any build dependencies it needs.
+You do not need to install Go manually for the Homebrew flow. Homebrew builds `stay` from source and installs any build dependencies it needs.
+
+Upgrade later:
+
+```bash
+brew upgrade KarlinskyS/tap/stay
+```
+
+Uninstall:
+
+```bash
+brew uninstall stay
+```
 
 ## Build From Source
 

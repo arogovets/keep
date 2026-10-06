@@ -34,7 +34,7 @@ architectures:
 language: go
 install:
   source-build: make install
-  wsl: make install-wsl
+  wsl: ./install-wsl.sh
 command: keep
 purpose: keep laptops awake for LLM model loading and downloading, network uptime, and convenience
 macos-method: Core Graphics mouse movement events
@@ -125,15 +125,15 @@ The existing upstream Homebrew formula is still named `stay`; build from this so
 
 ### Install and run from WSL
 
-From the repository checkout inside WSL, run:
+From the repository checkout inside WSL, with Go 1.22 or later installed, run:
 
 ```bash
-make install-wsl
+./install-wsl.sh
 export PATH="$HOME/.local/bin:$PATH"
 keep --interval 60s
 ```
 
-This cross-builds `keep.exe` for the WSL host architecture, installs it under `$HOME/.local/bin`, and installs a small `keep` shell wrapper there. The wrapper launches the Windows executable through WSL interop, so its mouse events affect the Windows desktop. WSL must have Windows executable interop enabled. [Microsoft's WSL interop documentation](https://learn.microsoft.com/en-us/windows/dev-environment/wsl-interop) describes running Windows executables from a Linux shell and requiring the `.exe` suffix.
+The installer does not require Make. It cross-builds `keep.exe` for the WSL host architecture, installs it under `$HOME/.local/bin`, and installs a small `keep` shell wrapper there. If Go is missing or too old, install Go 1.22 or later and rerun the script. The wrapper launches the Windows executable through WSL interop, so its mouse events affect the Windows desktop. WSL must have Windows executable interop enabled. [Microsoft's WSL interop documentation](https://learn.microsoft.com/en-us/windows/dev-environment/wsl-interop) describes running Windows executables from a Linux shell and requiring the `.exe` suffix.
 
 ## Run
 

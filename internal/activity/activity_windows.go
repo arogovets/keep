@@ -14,8 +14,9 @@ import (
 
 var (
 	user32Activity       = syscall.NewLazyDLL("user32.dll")
+	kernel32Activity     = syscall.NewLazyDLL("kernel32.dll")
 	getLastInputInfoProc = user32Activity.NewProc("GetLastInputInfo")
-	getTickCount64Proc   = user32Activity.NewProc("GetTickCount64")
+	getTickCount64Proc   = kernel32Activity.NewProc("GetTickCount64")
 )
 
 type lastInputInfo struct {

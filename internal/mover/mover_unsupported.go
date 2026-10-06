@@ -1,4 +1,4 @@
-//go:build !darwin
+//go:build !darwin && !windows
 
 package mover
 
@@ -10,5 +10,5 @@ import (
 type System struct{}
 
 func (System) MoveAndReturn(ctx context.Context, distance int) error {
-	return errors.New("stay is supported only on macOS")
+	return errors.New("keep is supported only on macOS and Windows")
 }

@@ -32,7 +32,7 @@ func DefaultConfig() Config {
 
 func ParseArgs(args []string, out io.Writer, version string) (Config, error) {
 	cfg := DefaultConfig()
-	fs := flag.NewFlagSet("stay", flag.ContinueOnError)
+	fs := flag.NewFlagSet("keep", flag.ContinueOnError)
 	fs.SetOutput(out)
 
 	interval := fs.String("interval", cfg.Interval.String(), "check interval, for example 60s, 1m, or 500ms")
@@ -41,7 +41,7 @@ func ParseArgs(args []string, out io.Writer, version string) (Config, error) {
 	fs.BoolVar(&cfg.Verbose, "verbose", cfg.Verbose, "print detailed diagnostic logs")
 	fs.BoolVar(&cfg.Version, "version", false, "print version and exit")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: stay [options]\n\nOptions:\n")
+		fmt.Fprintf(fs.Output(), "Usage: keep [options]\n\nOptions:\n")
 		fs.PrintDefaults()
 	}
 

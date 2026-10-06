@@ -12,6 +12,22 @@ permissions:
   contents: read
 
 jobs:
+  windows-build:
+    name: Windows Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build -ldflags "-s -w -X main.version=ci" -o keep.exe ./cmd/keep
+
   test:
     name: Test
     runs-on: macos-latest

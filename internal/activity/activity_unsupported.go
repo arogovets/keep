@@ -1,4 +1,4 @@
-//go:build !darwin
+//go:build !darwin && !windows
 
 package activity
 
@@ -10,7 +10,7 @@ import (
 type System struct{}
 
 func (System) LastInputAge() (time.Duration, error) {
-	return 0, errors.New("stay is supported only on macOS")
+	return 0, errors.New("keep is supported only on macOS and Windows")
 }
 
 func (System) AccessibilityTrusted() bool {

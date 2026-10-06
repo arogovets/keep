@@ -24,6 +24,11 @@ type cursorMover interface {
 	MoveAndReturn(ctx context.Context, distance int) error
 }
 
+type actionReporter interface {
+	StartupDetail(distance int) string
+	ActionDescription() string
+}
+
 func Run(args []string, stdout io.Writer, stderr io.Writer, version string) (int, error) {
 	cfg, err := ParseArgs(args, stderr, version)
 	if err != nil {
@@ -33,7 +38,7 @@ func Run(args []string, stdout io.Writer, stderr io.Writer, version string) (int
 		return 2, err
 	}
 	if cfg.Version {
-		fmt.Fprintf(stdout, "stay %s\n", version)
+		fmt.Fprintf(stdout, "keep %s\n", version)
 		return 0, nil
 	}
 
@@ -61,14 +66,17 @@ type appRunner struct {
 
 func (r *appRunner) run(ctx context.Context) (int, error) {
 	if !r.activity.AccessibilityTrusted() {
-		return 1, errors.New(`Stay requires Accessibility permission.
+		return 1, errors.New(`Keep requires Accessibility permission.
 Open System Settings -> Privacy & Security -> Accessibility
-and allow your terminal application or the stay binary.`)
+and allow your terminal application or the keep binary.`)
 	}
-
-	r.log("Stay started")
+	r.log("Keep started")
 	fmt.Fprintf(r.out, "Interval: %s\n", formatDuration(r.cfg.Interval))
-	fmt.Fprintf(r.out, "Move distance: %d display point(s)\n", r.cfg.Distance)
+	if reporter, ok := r.mover.(actionReporter); ok {
+		fmt.Fprintln(r.out, reporter.StartupDetail(r.cfg.Distance))
+	} else {
+		fmt.Fprintf(r.out, "Move distance: %d display point(s)\n", r.cfg.Distance)
+	}
 	fmt.Fprintln(r.out, "Press Ctrl+C to stop")
 	fmt.Fprintln(r.out)
 
@@ -115,11 +123,18 @@ func (r *appRunner) tick(ctx context.Context) error {
 	}
 	r.lastSyntheticAt = r.now()
 	if r.cfg.Always && idleFor < r.cfg.Interval {
-		r.log("always mode - cursor moved after %s idle", formatDuration(idleFor))
+		r.log("always mode - %s after %s idle", r.actionDescription(), formatDuration(idleFor))
 		return nil
 	}
-	r.log("idle for %s - cursor moved", formatDuration(idleFor))
+	r.log("idle for %s - %s", formatDuration(idleFor), r.actionDescription())
 	return nil
+}
+
+func (r *appRunner) actionDescription() string {
+	if reporter, ok := r.mover.(actionReporter); ok {
+		return reporter.ActionDescription()
+	}
+	return "cursor moved"
 }
 
 func (r *appRunner) log(format string, args ...any) {

@@ -96,6 +96,12 @@ const returnDelay = 100 * time.Millisecond
 
 type System struct{}
 
+func (System) StartupDetail(distance int) string {
+	return fmt.Sprintf("Move distance: %d display point(s)", distance)
+}
+
+func (System) ActionDescription() string { return "cursor moved" }
+
 func (System) MoveAndReturn(ctx context.Context, distance int) error {
 	if err := ctx.Err(); err != nil {
 		return err
